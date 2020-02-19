@@ -1,0 +1,23 @@
+{
+  "name": "stevector/hacky-proxy",
+  "description": "PoC proxying to GCP Buckets from Pantheon",
+  "type": "library",
+  "require": {
+    "zendframework/zend-diactoros": "^1",
+    "jenssegers/proxy": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Stevector\\HackyProxy\\": "src/"
+    },
+    "files": [
+      "proxy-loader.php"
+    ]
+  },
+  "authors": [
+    {
+      "name": "Steve Persch",
+      "email": "steve.persch@pantheon.io"
+    }
+  ]
+}
