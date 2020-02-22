@@ -11,9 +11,13 @@ use Zend\Diactoros\Response\SapiStreamEmitter;
 class PantheonToGCPBucket {
 
   private function calculatePrefix() {
-//print_r($_ENV);
 
     return $_ENV['PANTHEON_SITE_NAME'] . '--' . $_ENV['PANTHEON_ENVIRONMENT'];
+
+
+
+
+
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
       return $_ENV['PANTHEON_ENVIRONMENT'];
     }
@@ -22,15 +26,20 @@ class PantheonToGCPBucket {
     return 'pr-19';
   }
 
-  private function calculateUri() {
-    //$suffix =  . '/index.html';
-    $suffix = '';
+  private function calculateUri($exclude_html_suffix) {
+
+    if (!empty($exclude_html_suffix)) {
+      $suffix = '';
+    }
+    else {
+      $suffix =  '/index.html';
+    }
 
     if ($_SERVER['REQUEST_URI'] === '/') {
       return '/' . $this->calculatePrefix() . $suffix;
     }
 
-    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'] . $;
+    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'] . $suffix;
   }
 
   private function isBackendPath() {
@@ -60,10 +69,8 @@ class PantheonToGCPBucket {
     }
   }
 
-  function __construct()
+  function __construct($url)
   {
-
-
       // No REQUEST_URI
       if (empty($_SERVER['REQUEST_URI'])) {
         return;
@@ -73,12 +80,10 @@ class PantheonToGCPBucket {
         return;
       }
 
-
-//      die();
       $server = array_merge(
         $_SERVER,
         [
-          'REQUEST_URI' => $this->calculateUri(),
+          'REQUEST_URI' => $this->calculateUri(strpos($url, 'cloudfunction')),
         ]
       );
 
@@ -98,9 +103,6 @@ class PantheonToGCPBucket {
 
       // Add a response filter that removes the encoding headers.
       $proxy->filter(new RemoveEncodingFilter());
-
-      // @TODO Read from ENV or app-config
-      $url = 'https://us-central1-serverlessplayground.cloudfunctions.net/';
 
       if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
         // @TODO update $server['REQUEST_URI'] to a valid 404 frontend page path
