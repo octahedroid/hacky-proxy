@@ -11,6 +11,9 @@ use Zend\Diactoros\Response\SapiStreamEmitter;
 class PantheonToGCPBucket {
 
   private function calculatePrefix() {
+//print_r($_ENV);
+
+    return $_ENV['PANTHEON_SITE_NAME'] . '--' . $_ENV['PANTHEON_ENVIRONMENT'];
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
       return $_ENV['PANTHEON_ENVIRONMENT'];
     }
@@ -20,11 +23,14 @@ class PantheonToGCPBucket {
   }
 
   private function calculateUri() {
+    //$suffix =  . '/index.html';
+    $suffix = '';
+
     if ($_SERVER['REQUEST_URI'] === '/') {
-      return '/' . $this->calculatePrefix() . '/index.html';
+      return '/' . $this->calculatePrefix() . $suffix;
     }
 
-    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'] . '/index.html';
+    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'] . $;
   }
 
   private function isBackendPath() {
@@ -34,7 +40,7 @@ class PantheonToGCPBucket {
       '/wp/',
       'wp-admin.php',
     ];
-    
+
     $isBackendPath = array_filter($paths, function($path) {
       return strpos($_SERVER['REQUEST_URI'], $path) !== FALSE;
     });
@@ -56,6 +62,8 @@ class PantheonToGCPBucket {
 
   function __construct()
   {
+
+
       // No REQUEST_URI
       if (empty($_SERVER['REQUEST_URI'])) {
         return;
@@ -65,6 +73,8 @@ class PantheonToGCPBucket {
         return;
       }
 
+
+//      die();
       $server = array_merge(
         $_SERVER,
         [
@@ -90,7 +100,7 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       // @TODO Read from ENV or app-config
-      $url = 'http://gcp-gatsby-bucket.stevector.com/';
+      $url = 'https://us-central1-serverlessplayground.cloudfunctions.net/';
 
       if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
         // @TODO update $server['REQUEST_URI'] to a valid 404 frontend page path
