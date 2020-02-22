@@ -1,3 +1,3 @@
 <?php
 
-$hackyproxy = new \Stevector\HackyProxy\PantheonToGCPBucket();
+// $hackyproxy = new \Stevector\HackyProxy\PantheonToGCPBucket();
