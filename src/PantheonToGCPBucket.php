@@ -90,7 +90,7 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       // @TODO Read from ENV or app-config
-      $url = 'http://gcp-gatsby-bucket.stevector.com/';
+      $url = 'http://pantheon-proxy-wordpress.static.artifactor.io';
 
       if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
         // @TODO update $server['REQUEST_URI'] to a valid 404 frontend page path
