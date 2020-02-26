@@ -16,15 +16,24 @@ class PantheonToGCPBucket {
     }
 
     // @TODO return master, live, prod or the default stage name.
-    return 'pr-19';
+    return 'dev';
   }
 
   private function calculateUri() {
     if ($_SERVER['REQUEST_URI'] === '/') {
-      return '/' . $this->calculatePrefix() . '/index.html';
+      return '/' . $this->calculatePrefix();
     }
 
-    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'] . '/index.html';
+    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'];
+  }
+
+  private function calculateUrl() {
+    if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
+      return $_ENV['PANTHEON_SITE_NAME'];
+    }
+
+    // @TODO return default pantheon site-name.
+    return 'pantheon-proxy-wordpress';
   }
 
   private function isBackendPath() {
@@ -90,10 +99,11 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       // @TODO Read from ENV or app-config
-      $url = 'https://pantheon-proxy-wordpress.static.artifactor.io/';
+      $url = 'http://'.$this->calculateUrl().'.static.artifactor.io/';
 
       if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
         // @TODO update $server['REQUEST_URI'] to a valid 404 frontend page path
+
         return;
       }
 
