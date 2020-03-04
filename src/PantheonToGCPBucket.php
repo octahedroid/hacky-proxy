@@ -5,8 +5,8 @@ namespace Stevector\HackyProxy;
 use Proxy\Proxy;
 use Proxy\Adapter\Guzzle\GuzzleAdapter;
 use Proxy\Filter\RemoveEncodingFilter;
-use Zend\Diactoros\ServerRequestFactory;
-use Zend\Diactoros\Response\SapiStreamEmitter;
+use Laminas\Diactoros\ServerRequestFactory;
+use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 class PantheonToGCPBucket {
 
