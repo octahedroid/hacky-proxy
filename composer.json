@@ -2,8 +2,14 @@
   "name": "stevector/hacky-proxy",
   "description": "PoC proxying to GCP Buckets from Pantheon",
   "type": "library",
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/octahedroid/php-proxy"
+    }
+  ],
   "require": {
-    "jenssegers/proxy": "^3.0"
+    "jenssegers/proxy": "dev-master"
   },
   "autoload": {
     "psr-4": {
