@@ -3,7 +3,6 @@
   "description": "PoC proxying to GCP Buckets from Pantheon",
   "type": "library",
   "require": {
-    "zendframework/zend-diactoros": "^1",
     "jenssegers/proxy": "^3.0"
   },
   "autoload": {
