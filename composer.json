@@ -9,7 +9,7 @@
     }
   ],
   "require": {
-    "jenssegers/proxy": "dev-master"
+    "octahedroid/php-proxy": "dev-master"
   },
   "autoload": {
     "psr-4": {
