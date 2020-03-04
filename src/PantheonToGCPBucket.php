@@ -10,13 +10,59 @@ use Zend\Diactoros\Response\SapiStreamEmitter;
 
 class PantheonToGCPBucket {
 
+  protected $domain = 'static.pantheon.io';
+
+  protected $skipUrls = [
+      '.php',
+      '/wp/',
+      'wp-admin.php',
+  ];
+
+  protected $environment = 'dev';
+
+  protected $site = 'pantheon-proxy-wordpress';
+
+  public function setDomain(String $domain)
+  {
+    $this->domain = $domain;
+
+    return $this;
+  }
+
+  public function setSkipUrls(Array $skipUrls)
+  {
+    $this->skipUrls = $skipUrls;
+
+    return $this;
+  }
+
+  public function addSkipUrls(Array $skipUrls)
+  {
+    $this->skipUrls = array_merge($this->skipUrls ,$skipUrls);
+
+    return $this;
+  }
+
+  public function setEnvironment(String $environment)
+  {
+    $this->environment = $environment;
+
+    return $this;
+  }
+
+  public function setSite(String $site)
+  {
+    $this->site = $site;
+
+    return $this;
+  }
+
   private function calculatePrefix() {
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
       return $_ENV['PANTHEON_ENVIRONMENT'];
     }
 
-    // @TODO return master, live, prod or the default stage name.
-    return 'dev';
+    return $this->environment;
   }
 
   private function calculateUri() {
@@ -27,25 +73,17 @@ class PantheonToGCPBucket {
     return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'];
   }
 
-  private function calculateUrl() {
+  private function calculateSite() {
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
       return $_ENV['PANTHEON_SITE_NAME'];
     }
 
-    // @TODO return default pantheon site-name.
-    return 'pantheon-proxy-wordpress';
+    return $this->site;
   }
 
   private function isBackendPath() {
-    // @TODO read from app-config or ENV
-    $paths = [
-      '.php',
-      '/wp/',
-      'wp-admin.php',
-    ];
-    
-    $isBackendPath = array_filter($paths, function($path) {
-      return strpos($_SERVER['REQUEST_URI'], $path) !== FALSE;
+    $isBackendPath = array_filter($this->skipUrls, function($url) {
+      return strpos($_SERVER['REQUEST_URI'], $url) !== FALSE;
     });
 
     return (count($isBackendPath) > 0);
@@ -63,9 +101,7 @@ class PantheonToGCPBucket {
     }
   }
 
-  function __construct()
-  {
-      // No REQUEST_URI
+  function forward() {
       if (empty($_SERVER['REQUEST_URI'])) {
         return;
       }
@@ -98,11 +134,9 @@ class PantheonToGCPBucket {
       // Add a response filter that removes the encoding headers.
       $proxy->filter(new RemoveEncodingFilter());
 
-      // @TODO Read from ENV or app-config
-      $url = 'http://'.$this->calculateUrl().'.static.artifactor.io/';
+      $url = 'http://'.$this->calculateSite().'.'.$this->domain.'/';
 
       if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
-        // @TODO update $server['REQUEST_URI'] to a valid 404 frontend page path
 
         return;
       }
