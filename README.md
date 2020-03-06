@@ -26,7 +26,7 @@ $hackyproxy = new \Stevector\HackyProxy\PantheonToGCPBucket();
 
 // Use hackyproxy instance
 $hackyproxy
-  ->setDomain('static.artifactor.io') // domain to resolve the static site
+  ->setDomain('static.artifactor.io') // domain to forward the static site
   ->setSite('pantheon-proxy-wordpress') // pantheon site name
   ->forward();
 ```
