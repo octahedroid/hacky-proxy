@@ -24,10 +24,39 @@ Add a new file named `proxy-loader.php` on your composer root project containing
 // Create new PantheonToGCPBucket instance
 $hackyproxy = new \Stevector\HackyProxy\PantheonToGCPBucket();
 
-// Use hackyproxy instance
+// Using a single forward configuration
 $hackyproxy
-  ->setDomain('static.artifactor.io') // domain to forward the static site
-  ->setSite('pantheon-proxy-wordpress') // pantheon site name
+  ->setSite('pantheon-proxy-wordpress') // pantheon site
+  ->setEnvironment('dev') // pantheon environment
+  ->setForwards(
+    [
+      [
+        'path' => '/',
+        'url' => 'http://{site}.static.artifactor.io',
+        'prefix' => '{environment}',
+      ]
+    ]
+  )
+  ->forward();
+
+// Using a more complex forward configuration
+$hackyproxy
+  ->setSite('pantheon-rogers-funny-words') // pantheon site
+  ->setEnvironment('dev') // pantheon environment
+  ->setForwards(
+    [
+      [
+        'path' => '/static/',
+        'url' => 'http://{site}.static.artifactor.io',
+        'prefix' => '{environment}',
+      ],
+      [
+        'path' => '/',
+        'url' => 'https://us-central1-webops-prototypes.cloudfunctions.net',
+        'prefix' => '{site}--{environment}',
+      ],
+    ]
+  )
   ->forward();
 ```
 
