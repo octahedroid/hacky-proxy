@@ -10,21 +10,21 @@ use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 class PantheonToGCPBucket {
 
-  protected $domain = 'static.pantheon.io';
-
   protected $skipUrls = [
       '.php',
       '/wp/',
       'wp-admin.php',
   ];
+  protected $environment = '';
+  protected $site = '';
+  protected $forwards = [];
+  protected $prefix = '';
+  protected $url = '';
+  protected $uri = '';
 
-  protected $environment = 'dev';
-
-  protected $site = 'pantheon-proxy-wordpress';
-
-  public function setDomain(String $domain)
+  public function setForwards(Array $forwards)
   {
-    $this->domain = $domain;
+    $this->forwards = $forwards;
 
     return $this;
   }
@@ -57,31 +57,63 @@ class PantheonToGCPBucket {
     return $this;
   }
 
-  private function calculatePrefix() {
+  private function calculateSite()
+  {
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
-      return $_ENV['PANTHEON_ENVIRONMENT'];
+      $this->site = $_ENV['PANTHEON_SITE_NAME'];
     }
-
-    return $this->environment;
   }
 
-  private function calculateUri() {
+  private function calculateEnvironment()
+  {
+    if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
+      $this->environment = $_ENV['PANTHEON_ENVIRONMENT'];
+    };
+  }
+
+  private function calculateForward()
+  {
+    foreach ($this->forwards as $forward) {
+      if (strpos($_SERVER['REQUEST_URI'], $forward['path']) !== FALSE) {
+        $this->prefix = str_replace(
+          [
+            '{site}',
+            '{environment}',
+          ],
+          [
+            $this->site,
+            $this->environment,
+          ],
+          $forward['prefix']
+        );
+        $this->url = str_replace(
+          [
+            '{site}',
+            '{environment}',
+          ],
+          [
+            $this->site,
+            $this->environment,
+          ],
+          $forward['url'] . '/'
+        );
+
+        return;
+      }
+    }
+  }
+
+  private function calculateUri()
+  {
     if ($_SERVER['REQUEST_URI'] === '/') {
-      return '/' . $this->calculatePrefix();
+      $this->uri = '/' . $this->prefix;
     }
 
-    return '/' . $this->calculatePrefix() . $_SERVER['REQUEST_URI'];
+    $this->uri = '/' . $this->prefix . $_SERVER['REQUEST_URI'];
   }
 
-  private function calculateSite() {
-    if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
-      return $_ENV['PANTHEON_SITE_NAME'];
-    }
-
-    return $this->site;
-  }
-
-  private function isBackendPath() {
+  private function isBackendPath()
+  {
     $isBackendPath = array_filter($this->skipUrls, function($url) {
       return strpos($_SERVER['REQUEST_URI'], $url) !== FALSE;
     });
@@ -89,10 +121,9 @@ class PantheonToGCPBucket {
     return (count($isBackendPath) > 0);
   }
 
-  private function isValidPath($guzzle, $url, $uri) {
+  private function isValidPath($guzzle) {
     try {
-      $path = $url . ($uri[0] === "/" ? substr($uri, 1) : $uri);
-      $guzzle->head($path);
+      $guzzle->head(str_replace('//', '/', $this->url . $this->uri));
 
       return true;
     } catch (\Exception $e) {
@@ -101,7 +132,8 @@ class PantheonToGCPBucket {
     }
   }
 
-  function forward() {
+  function forward()
+  {
       if (empty($_SERVER['REQUEST_URI'])) {
         return;
       }
@@ -110,10 +142,16 @@ class PantheonToGCPBucket {
         return;
       }
 
+      // Calculate variables
+      $this->calculateEnvironment();
+      $this->calculateSite();
+      $this->calculateForward();
+      $this->calculateUri();
+
       $server = array_merge(
         $_SERVER,
         [
-          'REQUEST_URI' => $this->calculateUri(),
+          'REQUEST_URI' => $this->uri,
         ]
       );
 
@@ -134,19 +172,15 @@ class PantheonToGCPBucket {
       // Add a response filter that removes the encoding headers.
       $proxy->filter(new RemoveEncodingFilter());
 
-      $url = 'http://'.$this->calculateSite().'.'.$this->domain.'/';
-
-      if (!$this->isValidPath($guzzle, $url, $server['REQUEST_URI'])) {
+      if (!$this->isValidPath($guzzle)) {
 
         return;
       }
 
       // Forward the request and get the response.
-      $response = $proxy->forward($request)->to($url);
-
-      // @TODO dependency to laminas-httphandlerrunner
-      $emiter = new SapiStreamEmitter();
-      $emiter->emit($response);
+      $response = $proxy->forward($request)->to($this->url);
+      $emitter = new SapiStreamEmitter();
+      $emitter->emit($response);
       exit();
     }
 }
