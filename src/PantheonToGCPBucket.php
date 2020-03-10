@@ -123,7 +123,9 @@ class PantheonToGCPBucket {
 
   private function isValidPath($guzzle) {
     try {
-      $guzzle->head(str_replace('//', '/', $this->url . $this->uri));
+      $path = $this->url . ($this->uri[0] === "/" ? substr($this->uri, 1) : $this->uri);
+
+      $guzzle->head($path);
 
       return true;
     } catch (\Exception $e) {
