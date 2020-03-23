@@ -43,6 +43,7 @@ class PantheonToGCPBucket {
     return $this;
   }
 
+  // @todo, what good is this method if calculateEnvironment ignores the value?
   public function setEnvironment(String $environment)
   {
     $this->environment = $environment;
@@ -50,6 +51,7 @@ class PantheonToGCPBucket {
     return $this;
   }
 
+  // @todo, what good is this method if calculateEnvironment ignores the value?
   public function setSite(String $site)
   {
     $this->site = $site;
@@ -109,7 +111,8 @@ class PantheonToGCPBucket {
       $this->uri = '/' . $this->prefix;
     }
 
-    $this->uri = '/' . $this->prefix . $_SERVER['REQUEST_URI'];
+    $this->uri = $this->prefix . $_SERVER['REQUEST_URI'];
+    return $this->uri;
   }
 
   private function isBackendPath()
@@ -124,7 +127,6 @@ class PantheonToGCPBucket {
   private function isValidPath($guzzle) {
     try {
       $path = $this->url . ($this->uri[0] === "/" ? substr($this->uri, 1) : $this->uri);
-
       $guzzle->head($path);
 
       return true;
@@ -175,7 +177,6 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       if (!$this->isValidPath($guzzle)) {
-
         return;
       }
 
