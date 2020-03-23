@@ -28,12 +28,13 @@ $hackyproxy = new \Stevector\HackyProxy\PantheonToGCPBucket();
 $hackyproxy
   ->setSite('pantheon-proxy-wordpress') // pantheon site
   ->setEnvironment('dev') // pantheon environment
+  ->setFramework('wordpress') // pantheon framework `wordpress` or `drupal`
   ->setForwards(
     [
       [
         'path' => '/',
         'url' => 'http://{site}.static.artifactor.io',
-        'prefix' => '{environment}',
+        'prefix' => '{site}--{environment}',
       ]
     ]
   )
@@ -43,12 +44,15 @@ $hackyproxy
 $hackyproxy
   ->setSite('pantheon-rogers-funny-words') // pantheon site
   ->setEnvironment('dev') // pantheon environment
+  ->setFramework('wordpress') // pantheon framework
+  ->setHash('b54df3e') // pantheon hash
+  ->setHashEnabled(true) // pantheon hash-flag
   ->setForwards(
     [
       [
         'path' => '/static/',
         'url' => 'http://{site}.static.artifactor.io',
-        'prefix' => '{environment}',
+        'prefix' => '{site}--{environment}',
       ],
       [
         'path' => '/',
