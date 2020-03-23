@@ -10,13 +10,30 @@ use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 
 class PantheonToGCPBucket {
 
+  protected $platformEnvironments = [
+    'dev',
+    'test',
+    'live'
+  ];
   protected $skipUrls = [
+    'wordpress' => [
       '.php',
       '/wp/',
       'wp-admin.php',
+    ],
+    'drupal' => [
+      '.php',
+      '/admin/',
+      '/user/login',
+      '/user/register',
+      '/graphql/',
+    ]
   ];
+  protected $hashEnabled = false;
   protected $environment = '';
   protected $site = '';
+  protected $hash = '';
+  protected $framework = '';
   protected $forwards = [];
   protected $prefix = '';
   protected $url = '';
@@ -57,6 +74,27 @@ class PantheonToGCPBucket {
     return $this;
   }
 
+  public function setHash(String $hash)
+  {
+    $this->hash = $hash;
+
+    return $this;
+  }
+
+  public function setFramework(String $framework)
+  {
+    $this->framework = $framework;
+
+    return $this;
+  }
+
+  public function setHashEnabled($hashEnabled)
+  {
+    $this->hashEnabled = $hashEnabled;
+
+    return $this;
+  }
+
   private function calculateSite()
   {
     if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
@@ -71,18 +109,31 @@ class PantheonToGCPBucket {
     };
   }
 
+  private function calculateHash()
+  {
+    if (!empty($_ENV['PANTHEON_ENVIRONMENT']) && $_ENV['PANTHEON_ENVIRONMENT'] !== 'lando') {
+      $this->hash = $_ENV['PANTHEON_DEPLOYMENT_IDENTIFIER'];
+    }
+  }
+
   private function calculateForward()
   {
     foreach ($this->forwards as $forward) {
       if (strpos($_SERVER['REQUEST_URI'], $forward['path']) !== FALSE) {
+        if ($this->hashEnabled && in_array($this->environment, $this->platformEnvironments)) {
+          $forward['prefix'] = $forward['prefix'] . '--{hash}';
+        }
+
         $this->prefix = str_replace(
           [
             '{site}',
             '{environment}',
+            '{hash}',
           ],
           [
             $this->site,
             $this->environment,
+            $this->hash,
           ],
           $forward['prefix']
         );
@@ -90,10 +141,12 @@ class PantheonToGCPBucket {
           [
             '{site}',
             '{environment}',
+            '{hash}',
           ],
           [
             $this->site,
             $this->environment,
+            $this->hash,
           ],
           $forward['url'] . '/'
         );
@@ -114,7 +167,7 @@ class PantheonToGCPBucket {
 
   private function isBackendPath()
   {
-    $isBackendPath = array_filter($this->skipUrls, function($url) {
+    $isBackendPath = array_filter($this->skipUrls[$this->framework], function($url) {
       return strpos($_SERVER['REQUEST_URI'], $url) !== FALSE;
     });
 
@@ -147,6 +200,7 @@ class PantheonToGCPBucket {
       // Calculate variables
       $this->calculateEnvironment();
       $this->calculateSite();
+      $this->calculateHash();
       $this->calculateForward();
       $this->calculateUri();
 
@@ -175,7 +229,6 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       if (!$this->isValidPath($guzzle)) {
-
         return;
       }
 
