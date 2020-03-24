@@ -47,6 +47,7 @@ $hackyproxy
   ->setFramework('wordpress') // pantheon framework
   ->setHash('b54df3e') // pantheon hash
   ->setHashEnabled(true) // pantheon hash-flag
+  ->setCacheDisabled(true) // cache-control
   ->setForwards(
     [
       [
