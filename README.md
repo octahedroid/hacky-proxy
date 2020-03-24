@@ -35,6 +35,7 @@ $hackyproxy
         'path' => '/',
         'url' => 'http://{site}.static.artifactor.io',
         'prefix' => '{site}--{environment}',
+        'suffix' => 'index.html',
       ]
     ]
   )
