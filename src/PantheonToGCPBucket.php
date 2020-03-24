@@ -30,6 +30,7 @@ class PantheonToGCPBucket {
     ]
   ];
   protected $hashEnabled = false;
+  protected $cacheDisabled = false;
   protected $environment = '';
   protected $site = '';
   protected $hash = '';
@@ -91,6 +92,13 @@ class PantheonToGCPBucket {
   public function setHashEnabled($hashEnabled)
   {
     $this->hashEnabled = $hashEnabled;
+
+    return $this;
+  }
+
+  public function setCacheDisabled($cacheDisabled)
+  {
+    $this->cacheDisabled = $cacheDisabled;
 
     return $this;
   }
@@ -207,7 +215,7 @@ class PantheonToGCPBucket {
       $server = array_merge(
         $_SERVER,
         [
-          'REQUEST_URI' => $this->uri,
+          'REQUEST_URI' => $this->uri . ($this->cacheDisabled?'?ignoreCache=1':''),
         ]
       );
 
