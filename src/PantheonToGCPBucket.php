@@ -37,7 +37,6 @@ class PantheonToGCPBucket {
   protected $framework = '';
   protected $forwards = [];
   protected $prefix = '';
-  protected $suffix = '';
   protected $url = '';
   protected $uri = '';
 
@@ -160,8 +159,6 @@ class PantheonToGCPBucket {
           $forward['url'] . '/'
         );
 
-        $this->suffix = $forward['suffix'];
-
         return;
       }
     }
@@ -173,11 +170,7 @@ class PantheonToGCPBucket {
       $this->uri = '/' . $this->prefix;
     }
 
-    $this->uri = '/' . $this->prefix . $_SERVER['REQUEST_URI'];
-
-    if ($this->suffix) {
-      $this->uri .= (substr($this->uri, -1) === '/' ? $this->suffix : '/'. $this->suffix);
-    }
+    $this->uri = '/' . $this->prefix . rtrim($_SERVER['REQUEST_URI'], '/');
   }
 
   private function isBackendPath()
