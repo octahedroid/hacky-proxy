@@ -212,16 +212,6 @@ class PantheonToGCPBucket {
       $this->calculateForward();
       $this->calculateUri();
 
-      $server = array_merge(
-        $_SERVER,
-        [
-          'REQUEST_URI' => $this->uri . ($this->cacheDisabled?'?ignoreCache=1':''),
-        ]
-      );
-
-      // Create request object
-      $request = ServerRequestFactory::fromGlobals($server);
-
       // Create a guzzle client
       $guzzle = new \GuzzleHttp\Client([
         'curl' => [
@@ -237,8 +227,18 @@ class PantheonToGCPBucket {
       $proxy->filter(new RemoveEncodingFilter());
 
       if (!$this->isValidPath($guzzle)) {
-        return;
+        $this->uri = '/' . $this->prefix . '/404/';
       }
+
+      $server = array_merge(
+        $_SERVER,
+        [
+          'REQUEST_URI' => $this->uri . ($this->cacheDisabled?'?ignoreCache=1':''),
+        ]
+      );
+
+      // Create request object
+      $request = ServerRequestFactory::fromGlobals($server);
 
       // Forward the request and get the response.
       $response = $proxy->forward($request)->to($this->url);

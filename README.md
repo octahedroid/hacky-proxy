@@ -10,10 +10,6 @@ You can set a different array of URLs using the `setSkipUrls` method, or add mor
 
 ### Usage
 
-#### When not using composer
-
-TBD...
-
 #### When using composer
 
 Add a new file named `proxy-loader.php` on your composer root project containing the following PHP code.
