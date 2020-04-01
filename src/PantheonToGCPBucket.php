@@ -220,12 +220,6 @@ class PantheonToGCPBucket {
         ]
       ]);
 
-      // Create the proxy instance
-      $proxy = new Proxy(new GuzzleAdapter($guzzle));
-
-      // Add a response filter that removes the encoding headers.
-      $proxy->filter(new RemoveEncodingFilter());
-
       if (!$this->isValidPath($guzzle)) {
         $this->uri = '/' . $this->prefix . '/404/';
       }
@@ -236,6 +230,12 @@ class PantheonToGCPBucket {
           'REQUEST_URI' => $this->uri . ($this->cacheDisabled?'?ignoreCache=1':''),
         ]
       );
+
+      // Create the proxy instance
+      $proxy = new Proxy(new GuzzleAdapter($guzzle));
+
+      // Add a response filter that removes the encoding headers.
+      $proxy->filter(new RemoveEncodingFilter());
 
       // Create request object
       $request = ServerRequestFactory::fromGlobals($server);
