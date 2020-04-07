@@ -241,9 +241,14 @@ class PantheonToGCPBucket {
       $request = ServerRequestFactory::fromGlobals($server);
 
       // Forward the request and get the response.
-      $response = $proxy->forward($request)->to($this->url);
-      $emitter = new SapiStreamEmitter();
-      $emitter->emit($response);
+      try{
+        $response = $proxy->forward($request)->to($this->url);
+        $emitter = new SapiStreamEmitter();
+        $emitter->emit($response);
+      }
+      catch (\Exception $e){
+        // @TODO log error
+      }
       exit();
     }
 }
