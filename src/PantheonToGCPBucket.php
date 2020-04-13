@@ -7,6 +7,7 @@ use Proxy\Adapter\Guzzle\GuzzleAdapter;
 use Proxy\Filter\RemoveEncodingFilter;
 use Laminas\Diactoros\ServerRequestFactory;
 use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
+use Stevector\HackyProxy\Filter\StatusFilter;
 
 class PantheonToGCPBucket {
 
@@ -197,6 +198,7 @@ class PantheonToGCPBucket {
 
   function forward()
   {
+      $status = 200;
       if (empty($_SERVER['REQUEST_URI'])) {
         return;
       }
@@ -221,6 +223,7 @@ class PantheonToGCPBucket {
       ]);
 
       if (!$this->isValidPath($guzzle)) {
+        $status = 404;
         $this->uri = '/' . $this->prefix . '/404/';
       }
 
@@ -236,19 +239,25 @@ class PantheonToGCPBucket {
 
       // Add a response filter that removes the encoding headers.
       $proxy->filter(new RemoveEncodingFilter());
+      $proxy->filter(new StatusFilter($status));
 
       // Create request object
       $request = ServerRequestFactory::fromGlobals($server);
 
-      // Forward the request and get the response.
-      try{
+      try {
+        // Forward the request and get the response.
         $response = $proxy->forward($request)->to($this->url);
         $emitter = new SapiStreamEmitter();
         $emitter->emit($response);
       }
-      catch (\Exception $e){
-        // @TODO log error
+      catch(\Exception $e) {
+        if (extension_loaded('newrelic')){
+          newrelic_notice_error('This is an exception catched by hacky-proxy: '.$e->getMessage());
+        }
+
+        error_log('This is an exception catched by hacky-proxy: '.$e->getMessage());
       }
+
       exit();
     }
 }
