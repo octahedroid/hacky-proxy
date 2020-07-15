@@ -20,6 +20,7 @@ class PantheonToGCPBucket {
     'wordpress' => [
       '.php',
       '/wp/',
+      '/wp-admin/',
       'wp-admin.php',
     ],
     'drupal' => [
